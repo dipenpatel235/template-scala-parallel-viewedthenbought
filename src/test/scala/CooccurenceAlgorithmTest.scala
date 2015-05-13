@@ -1,4 +1,4 @@
-package org.template.similarproduct
+package org.template.viewedthenboughtproduct
 
 import io.prediction.data.storage.BiMap
 
@@ -18,39 +18,50 @@ class CooccurrenceAlgorithmTest
     "i3" -> 3
   ))
 
-  val viewSeq = Seq(
-    ViewEvent("u0", "i0", 1000010),
-    ViewEvent("u0", "i1", 1000020),
-    ViewEvent("u0", "i1", 1000020),
-    ViewEvent("u1", "i1", 1000030),
-    ViewEvent("u1", "i2", 1000040),
-    ViewEvent("u1", "i3", 1000040),
-    ViewEvent("u2", "i2", 1000040),
-    ViewEvent("u2", "i1", 1000040),
-    ViewEvent("u3", "i1", 1000040),
-    ViewEvent("u3", "i2", 1000040),
-    ViewEvent("u3", "i0", 1000040),
-    ViewEvent("u4", "i2", 1000040),
-    ViewEvent("u4", "i3", 1000040),
-    ViewEvent("u5", "i0", 1000040),
-    ViewEvent("u5", "i1", 1000040),
-    ViewEvent("u6", "i0", 1000040),
-    ViewEvent("u6", "i1", 1000040),
-    ViewEvent("u7", "i4", 1000050), //Unknown item
-    ViewEvent("u7", "i3", 1000050)
+  val sequences = Seq(
+    Sequence("u0",
+             List(SequenceElement("i0",1000010)),
+             List(SequenceElement("i0",1000020))),
+    Sequence("u1",
+             List(SequenceElement("i0",1000010),SequenceElement("i1",1000020)),
+             List(SequenceElement("i1",1000030),SequenceElement("i0",1000030))),
+    Sequence("u1",
+             List(SequenceElement("i2",1000010),SequenceElement("i1",1000020)),
+             List(SequenceElement("i1",1000030))),
+    Sequence("u2",
+             List(SequenceElement("i1",1000010),SequenceElement("i2",1000020)),
+             List(SequenceElement("i1",1000030),SequenceElement("i2",1000030))),
+    Sequence("u3",
+             List(SequenceElement("i1",1000010),SequenceElement("i3",1000020)),
+             List(SequenceElement("i1",1000030))),
+    Sequence("u4",
+             List(SequenceElement("i3",1000010),SequenceElement("i0",1000020)),
+             List(SequenceElement("i0",1000030),SequenceElement("i3",1000030))),
+    Sequence("u5",
+             List(SequenceElement("i3",1000010),SequenceElement("i4",1000020)),
+             List(SequenceElement("i3",1000030))),
+    Sequence("u5",
+             List(SequenceElement("i1",1000010),SequenceElement("i4",1000020)),
+             List(SequenceElement("i1",1000030),SequenceElement("i0",1000040))),
+    Sequence("u6",
+             List(SequenceElement("i0",1000010)),
+             List(SequenceElement("i0",1000020),SequenceElement("i1",1000020))),
+    Sequence("u6",
+             List(SequenceElement("i3",1000010)),
+             List(SequenceElement("i1",1000020),SequenceElement("i3",1000020),SequenceElement("i4",1000020)))
   )
 
   "trainCooccurrence" should "return top 10 correctly" in {
 
-    val viewEvents = sc.parallelize(viewSeq)
+    val sequencesRDD = sc.parallelize(sequences)
 
-    val topCooccurrences = algorithm.trainCooccurrence(viewEvents, 10, itemStringIntMap)
+    val topCooccurrences = algorithm.trainCooccurrence(sequencesRDD, 10, itemStringIntMap)
 
     val expected = Map(
-      0 -> Array((1, 4), (2, 1)),
-      1 -> Array((0, 4), (2, 3), (3, 1)),
-      2 -> Array((1, 3), (3, 2), (0, 1)),
-      3 -> Array((2, 2), (1, 1))
+      0 -> Array((0, 4), (1, 2), (3, 1)),
+      1 -> Array((1, 5), (0, 2), (2, 1)),
+      2 -> Array((1, 2), (2, 1)),
+      3 -> Array((3, 3), (1, 2), (0, 1))
     )
 
     topCooccurrences(0) should be (expected(0))
@@ -62,15 +73,15 @@ class CooccurrenceAlgorithmTest
 
   "trainCooccurrence" should "return top 1 correctly" in {
 
-    val viewEvents = sc.parallelize(viewSeq)
+    val sequencesRDD = sc.parallelize(sequences)
 
-    val topCooccurrences = algorithm.trainCooccurrence(viewEvents, 1, itemStringIntMap)
+    val topCooccurrences = algorithm.trainCooccurrence(sequencesRDD, 1, itemStringIntMap)
 
     val expected = Map(
-      0 -> Array((1, 4)),
-      1 -> Array((0, 4)),
-      2 -> Array((1, 3)),
-      3 -> Array((2, 2))
+      0 -> Array((0, 4)),
+      1 -> Array((1, 5)),
+      2 -> Array((1, 2)),
+      3 -> Array((3, 3))
     )
 
     topCooccurrences(0) should be (expected(0))

@@ -1,4 +1,4 @@
-package org.template.similarproduct
+package org.template.viewedthenboughtproduct
 
 import io.prediction.controller.P2LAlgorithm
 import io.prediction.controller.Params
@@ -32,7 +32,7 @@ class CooccurrenceAlgorithm(val ap: CooccurrenceAlgorithmParams)
     val itemStringIntMap = BiMap.stringInt(data.items.keys)
 
     val topCooccurrences = trainCooccurrence(
-      events = data.viewEvents,
+      sequences = data.sequences,
       n = ap.n,
       itemStringIntMap = itemStringIntMap
     )
@@ -40,7 +40,7 @@ class CooccurrenceAlgorithm(val ap: CooccurrenceAlgorithmParams)
     // collect Item as Map and convert ID to Int index
     val items: Map[Int, Item] = data.items.map { case (id, item) =>
       (itemStringIntMap(id), item)
-    }.collectAsMap.toMap
+    }.collectAsMap().toMap
 
     new CooccurrenceModel(
       topCooccurrences = topCooccurrences,
@@ -50,37 +50,33 @@ class CooccurrenceAlgorithm(val ap: CooccurrenceAlgorithmParams)
 
   }
 
-  /* given the user-item events, find out top n co-occurrence pair for each item */
+  /* given the sequences, find out top n co-occurrence pair for each apriori -> posteriori */
   def trainCooccurrence(
-    events: RDD[ViewEvent],
+    sequences: RDD[Sequence],
     n: Int,
     itemStringIntMap: BiMap[String, Int]): Map[Int, Array[(Int, Int)]] = {
 
-    val userItem = events
-      // map item from string to integer index
+    val cooccurrences: RDD[((Int, Int), Int)] = sequences
       .flatMap {
-        case ViewEvent(user, item, _) if itemStringIntMap.contains(item) => Some(user, itemStringIntMap(item))
-        case _ => None
+        case Sequence(_, apriori, posteriori) =>
+          for {
+            aprioriElement <- apriori if itemStringIntMap.contains(aprioriElement.item)
+            aprioriItemId = itemStringIntMap(aprioriElement.item)
+            posterioriElement <- posteriori if itemStringIntMap.contains(posterioriElement.item)
+            posterioriItemId = itemStringIntMap(posterioriElement.item)
+          } yield ((aprioriItemId, posterioriItemId), 1)
       }
-      // if user view same item multiple times, only count as once
-      .distinct()
-      .cache()
-
-    val cooccurrences: RDD[((Int, Int), Int)] = userItem.join(userItem)
-      // remove duplicate pair in reversed order for each user. eg. (a,b) vs. (b,a)
-      .filter { case (user, (item1, item2)) => item1 < item2 }
-      .map { case (user, (item1, item2)) => ((item1, item2), 1) }
       .reduceByKey{ (a: Int, b: Int) => a + b }
 
     val topCooccurrences = cooccurrences
-      .flatMap{ case (pair, count) =>
-        Seq((pair._1, (pair._2, count)), (pair._2, (pair._1, count)))
+      .map{ case (pair, count) =>
+        (pair._1, (pair._2, count))
       }
-      .groupByKey
+      .groupByKey()
       .map { case (item, itemCounts) =>
         (item, itemCounts.toArray.sortBy(_._2)(Ordering.Int.reverse).take(n))
       }
-      .collectAsMap.toMap
+      .collectAsMap().toMap
 
     topCooccurrences
   }

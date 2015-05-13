@@ -1,5 +1,5 @@
 """
-Import sample data for similar product engine
+Import sample data for product engine
 """
 
 import predictionio
@@ -51,6 +51,16 @@ def import_events(client):
         entity_id=user_id,
         target_entity_type="item",
         target_entity_id=viewed_item
+      )
+      count += 1
+    for bought_item in random.sample(item_ids, 2):
+      print "User", user_id ,"buys item", bought_item
+      client.create_event(
+        event="buy",
+        entity_type="user",
+        entity_id=user_id,
+        target_entity_type="item",
+        target_entity_id=bought_item
       )
       count += 1
 
