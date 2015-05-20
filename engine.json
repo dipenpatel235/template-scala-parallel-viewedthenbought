@@ -1,7 +1,7 @@
 {
   "id": "default",
   "description": "Default settings",
-  "engineFactory": "org.template.similarproduct.SimilarProductEngine",
+  "engineFactory": "org.template.viewedthenboughtproduct.ViewedThenBoughtProductEngine",
   "datasource": {
     "params" : {
       "appName": "INVALID_APP_NAME"
@@ -9,13 +9,15 @@
   },
   "algorithms": [
     {
-      "name": "als",
+      "name": "cooccurrence",
       "params": {
-        "rank": 10,
-        "numIterations" : 20,
-        "lambda": 0.01,
-        "seed": 3
+        "n": 20
       }
     }
-  ]
+  ],
+  "preparator": {
+    "params" : {
+      "sessionTimeout": 1800000
+    }
+  }
 }

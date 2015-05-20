@@ -1,4 +1,4 @@
-package org.template.similarproduct
+package org.template.viewedthenboughtproduct
 
 import io.prediction.controller.PDataSource
 import io.prediction.controller.EmptyEvaluationInfo
@@ -59,18 +59,23 @@ class DataSource(val dsp: DataSourceParams)
       (entityId, item)
     }.cache()
 
-    // get all "user" "view" "item" events
-    val viewEventsRDD: RDD[ViewEvent] = PEventStore.find(
+    // get all "user" "view" "buy" "item" events
+    val eventsRDD: RDD[SiteEvent] = PEventStore.find(
       appName = dsp.appName,
       entityType = Some("user"),
-      eventNames = Some(List("view")),
+      eventNames = Some(List("view", "buy")),
       // targetEntityType is optional field of an event.
       targetEntityType = Some(Some("item")))(sc)
-      // eventsDb.find() returns RDD[Event]
       .map { event =>
-        val viewEvent = try {
+        try {
           event.event match {
-            case "view" => ViewEvent(
+            case "view" => SiteEvent(
+              eventType = SiteEventType.View,
+              user = event.entityId,
+              item = event.targetEntityId.get,
+              t = event.eventTime.getMillis)
+            case "buy" => SiteEvent(
+              eventType = SiteEventType.Buy,
               user = event.entityId,
               item = event.targetEntityId.get,
               t = event.eventTime.getMillis)
@@ -78,18 +83,17 @@ class DataSource(val dsp: DataSourceParams)
           }
         } catch {
           case e: Exception => {
-            logger.error(s"Cannot convert ${event} to ViewEvent." +
+            logger.error(s"Cannot convert ${event} to SiteEvent." +
               s" Exception: ${e}.")
             throw e
           }
         }
-        viewEvent
       }.cache()
 
     new TrainingData(
       users = usersRDD,
       items = itemsRDD,
-      viewEvents = viewEventsRDD
+      siteEvents = eventsRDD
     )
   }
 }
@@ -98,16 +102,20 @@ case class User()
 
 case class Item(categories: Option[List[String]])
 
-case class ViewEvent(user: String, item: String, t: Long)
+object SiteEventType extends Enumeration {
+  type SiteEventType = Value
+  val View, Buy = Value
+}
+case class SiteEvent(eventType: SiteEventType.SiteEventType, user: String, item: String, t: Long)
 
 class TrainingData(
   val users: RDD[(String, User)],
   val items: RDD[(String, Item)],
-  val viewEvents: RDD[ViewEvent]
+  val siteEvents: RDD[SiteEvent]
 ) extends Serializable {
   override def toString = {
     s"users: [${users.count()} (${users.take(2).toList}...)]" +
     s"items: [${items.count()} (${items.take(2).toList}...)]" +
-    s"viewEvents: [${viewEvents.count()}] (${viewEvents.take(2).toList}...)"
+    s"siteEvents: [${siteEvents.count()}] (${siteEvents.take(2).toList}...)"
   }
 }

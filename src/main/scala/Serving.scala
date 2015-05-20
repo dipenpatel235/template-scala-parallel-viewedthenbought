@@ -1,4 +1,4 @@
-package org.template.similarproduct
+package org.template.viewedthenboughtproduct
 
 import io.prediction.controller.LServing
 

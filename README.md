@@ -1,45 +1,8 @@
-# Similar Product Template
-
-## Documentation
-
-Please refer to http://docs.prediction.io/templates/similarproduct/quickstart/
-
-## Versions
-
-### v0.3.1
-
-- Add CooccurrenceAlgorithm.
-  To use this algorithm, override engine.json by engine-cooccurrence.json,
-  or specify `--variant engine-cooccurrence.json` parameter for both pio train **and** deploy
-
-### v0.3.0
-
-- update for PredictionIO 0.9.2, including:
-
-  - use new PEventStore API
-  - use appName in DataSource parameter
-
-
-### v0.2.0
-
-- update build.sbt and template.json for PredictionIO 0.9.2
-
-### v0.1.3
-
-- cache mllibRatings RDD in algorithm train() because it is used at multiple places (non-empty data check and ALS)
-
-### v0.1.2
-
-- update for PredictionIO 0.9.0
-
-### v0.1.1
-
-- Persist RDD to memory (.cache()) in DataSource for better performance
-- Use local model for faster serving.
+# Viewed This Bought That Product Template
 
 ### v0.1.0
 
-- initial version
+- initial version based on similarproduct template: http://templates.prediction.io/PredictionIO/template-scala-parallel-similarproduct
 
 
 ## Development Notes
