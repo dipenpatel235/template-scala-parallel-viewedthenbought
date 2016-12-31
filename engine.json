@@ -1,0 +1,23 @@
+{
+  "id": "default",
+  "description": "Default settings",
+  "engineFactory": "org.template.viewedthenboughtproduct.ViewedThenBoughtProductEngine",
+  "datasource": {
+    "params" : {
+      "appName": "INVALID_APP_NAME"
+    }
+  },
+  "algorithms": [
+    {
+      "name": "cooccurrence",
+      "params": {
+        "n": 20
+      }
+    }
+  ],
+  "preparator": {
+    "params" : {
+      "sessionTimeout": 1800000
+    }
+  }
+}
